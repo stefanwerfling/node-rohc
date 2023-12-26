@@ -7,6 +7,8 @@ export interface rohcAddonTypes {
      * Return the rohc version
      */
     rohcVersion: () => string;
+
+    rohcCompress: (ipPacket: ArrayBuffer) => ArrayBuffer;
 }
 
 
