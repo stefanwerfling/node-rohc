@@ -3,30 +3,35 @@
 #include <rohc/rohc.h>
 #include <rohc/rohc_comp.h>
 
+using namespace Napi;
+
 static int gen_random_num(const struct rohc_comp *const comp, void *const user_context);
 
-static Napi::Value rohcNVersion(const Napi::CallbackInfo& info) {
-    const Napi::Env& env = info.Env();
-    return Napi::String::From(env, rohc_version());
+static Value rohcNVersion(const CallbackInfo& info) {
+    const Env& env = info.Env();
+    return String::From(env, rohc_version());
 }
 
-static Napi::Value rohcNCompress(const Napi::CallbackInfo& info) {
-    const Napi::Env& env = info.Env();
+static Value rohcNCompress(const CallbackInfo& info) {
+    const Env& env = info.Env();
 
     if (info.Length() != 1) {
-        throw Napi::TypeError::New(env, "Wrong number of arguments");
+        throw TypeError::New(env, "Wrong number of arguments");
     }
 
     if (!(info[0].IsArrayBuffer())) {
-        throw Napi::TypeError::New(env, "Wrong argument(s)!");
+        throw TypeError::New(env, "Wrong argument(s)!");
     }
+
+    // -----------------------------------------------------------------------------------------------------------------
 
     struct rohc_comp *compressor;
 
+    /* Create a ROHC compressor with small CIDs and the largest MAX_CID possible for small CIDs */
     compressor = rohc_comp_new2(ROHC_SMALL_CID, ROHC_SMALL_CID_MAX, gen_random_num, NULL);
 
     if(compressor == NULL) {
-        throw Napi::TypeError::New(env, "ROHC Compressor return null!");
+        throw Napi::TypeError::New(env, "Failed create the ROHC Compressor!");
     }
 
     if(!rohc_comp_enable_profile(compressor, ROHC_PROFILE_UNCOMPRESSED)) {
@@ -41,24 +46,33 @@ static Napi::Value rohcNCompress(const Napi::CallbackInfo& info) {
         throw Napi::TypeError::New(env, "ROHC failed to enable the IP/UDP and IP/ESP profiles!");
     }
 
-    std::cout << "Test";
-
     rohc_comp_free(compressor);
 
     std::vector<char> v{0x10, 0x11, 0x12};
 
-    return Napi::ArrayBuffer::New(env, v.data(), v.size());
+
+    const Object objResult = Object::New(info.Env());
+    objResult.DefineProperty(
+        PropertyDescriptor::Value(
+            "buffer",
+            ArrayBuffer::New(env, v.data(), v.size())
+        )
+    );
+    //objResult["buffer"] = ;
+    //objResult["Test"] = String::From(env, "test");
+
+    return objResult;
+    //return Object(env, objResult);
+    //return String::From(env, "Test");
 }
 
-static int gen_random_num(const struct rohc_comp *const comp,
-                          void *const user_context)
-{
+static int gen_random_num(const struct rohc_comp *const comp, void *const user_context) {
 	return rand();
 }
 
-static Napi::Object Init(Napi::Env env, Napi::Object exports) {
-    exports.Set("rohcVersion", Napi::Function::New(env, rohcNVersion));
-    exports.Set("rohcCompress", Napi::Function::New(env, rohcNCompress));
+static Object Init(Env env, Object exports) {
+    exports.Set("rohcVersion", Function::New(env, rohcNVersion));
+    exports.Set("rohcCompress", Function::New(env, rohcNCompress));
     return exports;
 }
 

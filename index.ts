@@ -1,4 +1,4 @@
-import rohcAddon from './src/ts/RohcAddon';
+import rohcAddon, {rohcCompressResult} from './src/ts/RohcAddon';
 
 class Rohc {
 
@@ -6,7 +6,7 @@ class Rohc {
         return rohcAddon.rohcVersion();
     }
 
-    public rohcCompress(ipPacket: ArrayBuffer): ArrayBuffer {
+    public rohcCompress(ipPacket: ArrayBuffer): rohcCompressResult {
         return rohcAddon.rohcCompress(ipPacket);
     }
 }

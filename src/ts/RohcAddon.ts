@@ -1,3 +1,9 @@
+
+export interface rohcCompressResult {
+    buffer: ArrayBuffer;
+    test: boolean;
+}
+
 /**
  * Rohc addon binding type
  */
@@ -8,7 +14,7 @@ export interface rohcAddonTypes {
      */
     rohcVersion: () => string;
 
-    rohcCompress: (ipPacket: ArrayBuffer) => ArrayBuffer;
+    rohcCompress: (ipPacket: ArrayBuffer) => rohcCompressResult;
 }
 
 
