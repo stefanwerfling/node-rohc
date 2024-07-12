@@ -1,7 +1,11 @@
 #include <iostream>
+#include <sstream>
+#include <cstdio>
 #include <napi.h>
 #include <rohc/rohc.h>
 #include <rohc/rohc_comp.h>
+
+#define BUFFER_SIZE 2048
 
 using namespace Napi;
 
@@ -13,15 +17,51 @@ static Value rohcNVersion(const CallbackInfo& info) {
 }
 
 static Value rohcNCompress(const CallbackInfo& info) {
+    rohc_status_t status;
+
+    unsigned char ip_buffer[BUFFER_SIZE];
+    unsigned char rohc_buffer[BUFFER_SIZE];
+
+    struct rohc_buf rohc_packet = rohc_buf_init_empty(rohc_buffer, BUFFER_SIZE);
+
     const Env& env = info.Env();
 
     if (info.Length() != 1) {
         throw TypeError::New(env, "Wrong number of arguments");
     }
 
-    if (!(info[0].IsArrayBuffer())) {
-        throw TypeError::New(env, "Wrong argument(s)!");
+    // Check that the argument is a Uint8Array
+    if (!info[0].IsTypedArray() || info[0].As<Napi::TypedArray>().TypedArrayType() != napi_uint8_array) {
+        throw TypeError::New(env, "Argument must be a Uint8Array");
+        return env.Null();
     }
+
+    Napi::Uint8Array ipBufferUnit = info[0].As<Napi::Uint8Array>();
+
+    size_t length = ipBufferUnit.ByteLength();
+
+    // Ensure the length does not exceed BUFFER_SIZE
+    if (length > BUFFER_SIZE) {
+        throw TypeError::New(env, "Uint8Array is too large");
+        return env.Null();
+    }
+
+    std::memcpy(ip_buffer, ipBufferUnit.Data(), length);
+    struct rohc_buf ip_packet = rohc_buf_init_empty(ip_buffer, BUFFER_SIZE);
+
+    // Dump ------------------------------------------------------------------------------------------------------------
+    std::ostringstream ipdump;
+    ipdump << "IP-Packet Dump: ";
+
+    for (size_t i = 0; i < length; ++i) {
+        char hex_byte[6];
+        std::sprintf(hex_byte, "%02x ", rohc_buf_byte_at(ip_packet, i));
+        ipdump << hex_byte;
+    }
+
+    std::string dumpMsg = ipdump.str();
+    Napi::Function consoleLog2 = env.Global().Get("console").As<Napi::Object>().Get("log").As<Napi::Function>();
+    consoleLog2.Call({ Napi::String::New(env, dumpMsg) });
 
     // -----------------------------------------------------------------------------------------------------------------
 
@@ -46,18 +86,31 @@ static Value rohcNCompress(const CallbackInfo& info) {
         throw Napi::TypeError::New(env, "ROHC failed to enable the IP/UDP and IP/ESP profiles!");
     }
 
+    status = rohc_compress4(compressor, ip_packet, &rohc_packet);
+
+    if(status == ROHC_STATUS_SEGMENT) {
+        Napi::Function consoleLog = env.Global().Get("console").As<Napi::Object>().Get("log").As<Napi::Function>();
+        consoleLog.Call({ Napi::String::New(env, "success: compression succeeded, but resulting ROHC packet was too large for the Maximum Reconstructed Reception Unit (MRRU) configured with \ref rohc_comp_set_mrru, the rohc_packet buffer contains the first ROHC segment and \ref rohc_comp_get_segment can be used to retrieve the next ones.") });
+    } else if(status == ROHC_STATUS_OK) {
+        Napi::Function consoleLog = env.Global().Get("console").As<Napi::Object>().Get("log").As<Napi::Function>();
+        consoleLog.Call({ Napi::String::New(env, "ROHC packet resulting from the ROHC compression:") });
+    } else {
+        std::ostringstream oss;
+        oss << "ROHC packet resulting from the ROHC compression: Status = " << status;
+        std::string errorMsg = oss.str();
+
+        throw Napi::TypeError::New(env, errorMsg);
+    }
+
     rohc_comp_free(compressor);
 
-    std::vector<char> v{0x10, 0x11, 0x12};
-
-
-    const Object objResult = Object::New(info.Env());
-    objResult.DefineProperty(
+   auto objResult = Object::New(info.Env());
+    /*objResult.DefineProperty(
         PropertyDescriptor::Value(
             "buffer",
-            ArrayBuffer::New(env, v.data(), v.size())
+            ArrayBuffer::New(env, data.release(), data.size())
         )
-    );
+    );*/
     //objResult["buffer"] = ;
     //objResult["Test"] = String::From(env, "test");
 
