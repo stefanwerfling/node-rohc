@@ -87,7 +87,10 @@ try {
     const compress = r.rohcCompress(new Uint8Array(ipPacketBufferWithContent));
 
     console.log(compress);
-    console.log(Buffer.from(compress.buffer).toString("hex"));
+
+    if (compress.buffer) {
+        console.log(Buffer.from(compress.buffer).toString("hex"));
+    }
 } catch (e) {
     console.error(e);
 }
@@ -98,7 +101,10 @@ try {
     const compress2 = r.rohcCompress(hexStringToUint8Array('45 C0 01 48 D3 67 00 00 40 11 70 D7 20 DB F8 01 20 DB FA EE 00 43 00 44 01 34 D6 71 02 01 06 00 43 57 CA 8B 00 17 00 00 00 00 00 00 20 DB FA EE 00 00 00 00 20 D9 AE 01 80 61 5F 08 2D 7A 00 00 00 00 00 00 00 00 00 00 64 68 63 70 30 35 2E 66 74 77 79 2E 69 6E 2E 66 72 6F 6E 74 69 65 72 6E 65 74 2E 6E 65 74 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 63 82 53 63 35 01 02 36 04 B8 10 06 9D 33 04 00 00 0E 10 01 04 FF FF F8 00 03 04 20 DB F8 01 0F 0F 66 74 72 64 68 63 70 75 73 65 72 2E 6E 65 74 06 08 4A 28 4A 28 4A 28 4A 29 FF 00 00 00 00 00'));
 
     console.log(compress2);
-    console.log(Buffer.from(compress2.buffer).toString("hex"));
+
+    if (compress2.buffer) {
+        console.log(Buffer.from(compress2.buffer).toString("hex"));
+    }
 } catch (e) {
     console.error(e);
 }
