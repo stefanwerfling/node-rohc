@@ -169,7 +169,7 @@ Object Init(Env env, Object exports) {
         }
 
         napi_add_env_cleanup_hook(env, [](void* /*data*/) {
-
+            njsrohc_free(njsRohc);
         }, nullptr);
 
         exports.Set("rohcVersion", Function::New(env, rohcNVersion));

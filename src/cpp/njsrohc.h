@@ -25,6 +25,6 @@ int njsrohc_comp(Env env, njsrohc_h *h, uint8_t *in, uint8_t *out, size_t len_in
 int njsrohc_decomp(Env env, njsrohc_h *h, uint8_t *in, uint8_t *out, size_t len_in);
 
 // Free
-int njsrohc_free();
+int njsrohc_free(njsrohc_h *h);
 
 #endif

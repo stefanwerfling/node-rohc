@@ -83,6 +83,12 @@ int njsrohc_comp(Env env, njsrohc_h *h, uint8_t *in, uint8_t *out, size_t len_in
 
     h->s = rohc_compress4(h->c, buf_in, &buf_out);
 
+    std::ostringstream oss;
+    oss << "compress status: = " << h->s;
+
+    Napi::Function log = env.Global().Get("console").As<Napi::Object>().Get("log").As<Napi::Function>();
+    log.Call({ Napi::String::New(env, oss.str()) });
+
     if(h->s != 0 && h->s != ROHC_STATUS_OK) {
         throw Napi::TypeError::New(env, "compression NOT OK");
     }
@@ -90,6 +96,26 @@ int njsrohc_comp(Env env, njsrohc_h *h, uint8_t *in, uint8_t *out, size_t len_in
     _dumpBuffer(env, out, buf_out.len);
 
     return buf_out.len;
+}
+
+// clean
+// ---------------------------------------------------------------------------------------------------------------------
+int njsrohc_free(njsrohc_h *h) {
+    if (h != nullptr) {
+        if(h->c != NULL) {
+            rohc_comp_free(h->c);
+        }
+
+        if(h->d != NULL) {
+            rohc_decomp_free(h->d);
+        }
+
+        free(h);
+
+        return 0;
+    }
+
+    return 1;
 }
 
 // dump buffer
