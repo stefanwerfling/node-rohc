@@ -90,6 +90,14 @@ try {
 
     if (compress.buffer) {
         console.log(Buffer.from(compress.buffer).toString("hex"));
+
+        const decompress = r.rohcDecompress(compress.buffer);
+
+        console.log(decompress);
+
+        if (decompress.buffer) {
+            console.log(Buffer.from(decompress.buffer).toString("hex"));
+        }
     }
 } catch (e) {
     console.error(e);

@@ -98,6 +98,31 @@ int njsrohc_comp(Env env, njsrohc_h *h, uint8_t *in, uint8_t *out, size_t len_in
     return buf_out.len;
 }
 
+// decompressor
+// ---------------------------------------------------------------------------------------------------------------------
+int njsrohc_decomp(Env env, njsrohc_h *h, uint8_t *in, uint8_t *out, size_t len_in) {
+    const struct rohc_buf buf_in = rohc_buf_init_full(in, len_in, _time);
+    struct rohc_buf buf_out = rohc_buf_init_empty(out, static_cast<size_t>(h->max_len));
+
+    _dumpBuffer(env, in, len_in);
+
+    h->s = rohc_decompress3(h->d, buf_in, &buf_out, NULL, NULL);
+
+    std::ostringstream oss;
+    oss << "decompress status: = " << h->s;
+
+    Napi::Function log = env.Global().Get("console").As<Napi::Object>().Get("log").As<Napi::Function>();
+    log.Call({ Napi::String::New(env, oss.str()) });
+
+    if(h->s != 0 && h->s != ROHC_STATUS_OK) {
+        throw Napi::TypeError::New(env, "decompression NOT OK");
+    }
+
+    _dumpBuffer(env, out, buf_out.len);
+
+    return buf_out.len;
+}
+
 // clean
 // ---------------------------------------------------------------------------------------------------------------------
 int njsrohc_free(njsrohc_h *h) {
