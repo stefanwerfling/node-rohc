@@ -4,7 +4,6 @@
       "target_name": "rohcAddon",
       "sources": [
         "src/cpp/rohc-napi.cpp",
-        "src/cpp/rohc-linux.cpp",
         "src/cpp/njsrohc.cpp"
       ],
       'cflags!': [ '-fno-exceptions', '--std=c++17', '-Wno-stringop-truncation' ],

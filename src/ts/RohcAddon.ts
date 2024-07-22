@@ -1,8 +1,45 @@
+/**
+ * Binding Logging
+ */
+export type RohcBindingLogging = (msg: string) => void;
 
-export interface rohcCompressResult {
-    buffer: Uint8Array;
-    test: boolean;
+/**
+ * Rohc binding object
+ */
+export interface RohcBindingObject {
+
+    /**
+     * Set the current buffer size
+     * @param {number} size
+     */
+    setBufferSize(size: number): void;
+
+    /**
+     * Return the current buffer size
+     */
+    getBufferSize(): number;
+
+    /**
+     * Set for more logging information
+     * @param {RohcBindingLogging} func
+     */
+    setLogger(func: RohcBindingLogging): void;
+
+    /**
+     * Compress an Ip-Packet to Rohc-Packet
+     * @param {Uint8Array} ipPacket
+     * @returns {Uint8Array}
+     */
+    compress(ipPacket: Uint8Array): Uint8Array;
+
+    /**
+     * Decompress a Rohc-Packet to Ip-Packet
+     * @param {Uint8Array} rohc
+     * @returns {Uint8Array}
+     */
+    decompress(rohc: Uint8Array): Uint8Array;
 }
+
 
 /**
  * Rohc addon binding type
@@ -16,21 +53,15 @@ export interface rohcAddonTypes {
     rohcVersion: () => string;
 
     /**
-     * Compress an ip packet to a rohc packet
-     * @param {Uint8Array} ipPacket
-     * @returns {rohcCompressResult}
+     * NjsRohc
+     * @constructor
      */
-    rohcCompress: (ipPacket: Uint8Array) => rohcCompressResult;
+    NjsRohc: () => RohcBindingObject;
 
-    /**
-     * Decompress a rohc packet to an ip packet
-     * @param {Uint8Array} rohcPacket
-     * @returns {rohcCompressResult}
-     */
-    rohcDecompress: (rohcPacket: Uint8Array) => rohcCompressResult;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 
 const rohcAddon: rohcAddonTypes = require('../../../build/Release/rohcAddon');
+
 export default rohcAddon;

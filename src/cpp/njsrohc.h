@@ -5,8 +5,11 @@
 #include <rohc/rohc_comp.h>
 #include <rohc/rohc_decomp.h>
 #include <napi.h>
+#include <optional>
 
 using namespace Napi;
+
+#define DEFAULT_BUFFER_SIZE 2048
 
 typedef struct njsrohc_s {
   int s;
@@ -15,16 +18,32 @@ typedef struct njsrohc_s {
   int max_len;
 } njsrohc_h;
 
-// Init rohc
-njsrohc_h *njsrohc_init(Env env, int buf_size);
+/**
+ * NjsRohc Object
+ */
+class NjsRohc : public ObjectWrap<NjsRohc> {
+    public:
+        static Napi::Object Init(Napi::Env env, Napi::Object exports);
+        static void Destructor(Napi::Env env, void* nativeObject, void* finalize_hint);
+        static Napi::Object NewInstance(Napi::Env env, Napi::Value arg);
 
-// Comp
-int njsrohc_comp(Env env, njsrohc_h *h, uint8_t *in, uint8_t *out, size_t len_in);
+        NjsRohc(const Napi::CallbackInfo& info);
+        ~NjsRohc();
 
-// decomp
-int njsrohc_decomp(Env env, njsrohc_h *h, uint8_t *in, uint8_t *out, size_t len_in);
+    private:
+        void setBufferSize(const Napi::CallbackInfo& info);
+        Napi::Value getBufferSize(const Napi::CallbackInfo& info);
+        void setLogger(const Napi::CallbackInfo& info);
+        void log_(const std::string& message);
+        void dumpBuffer_(uint8_t* buffer, size_t length);
+        Napi::Value compress(const Napi::CallbackInfo& info);
+        Napi::Value decompress(const Napi::CallbackInfo& info);
 
-// Free
-int njsrohc_free(njsrohc_h *h);
+        int buf_size_;
+        struct rohc_ts time_ = { .sec = 0, .nsec = 0 };
+        njsrohc_h* njsRohc_ = nullptr;
+
+        std::optional<Napi::Function> logger_;
+};
 
 #endif
