@@ -168,9 +168,13 @@ Napi::Value NjsRohc::getBufferSize(const Napi::CallbackInfo& info) {
 void NjsRohc::setLogger(const Napi::CallbackInfo& info) {
     Napi::Env env = info.Env();
 
-    if (!info[0].IsNull()) {
-        if (this->logger_.has_value()) {
-            this->logger_.reset();
+    if (info.Length() != 1) {
+        Napi::TypeError::New(env, "Wrong number of arguments").ThrowAsJavaScriptException();
+    }
+
+    if (info[0].IsNull()) {
+        if (this->logger_.IsEmpty()) {
+            this->logger_.Reset();
         }
 
         return;
@@ -181,16 +185,18 @@ void NjsRohc::setLogger(const Napi::CallbackInfo& info) {
         return;
     }
 
-    this->logger_ = std::make_optional(info[0].As<Napi::Function>());
+    this->logger_ = Napi::Persistent(info[0].As<Napi::Function>());
 }
 
 /**
  * log function for call logger callback
  */
 void NjsRohc::log_(const std::string& message) {
-    if (this->logger_.has_value()) {
-        Napi::Env env = this->logger_->Env();
-        this->logger_->Call({ Napi::String::New(env, message) });
+    if (!this->logger_.IsEmpty()) {
+        Napi::Function cb = this->logger_.Value();
+        Napi::Env env = cb.Env();
+
+        cb.Call(env.Global(), { Napi::String::New(env, message) });
     }
 }
 
@@ -242,14 +248,14 @@ Napi::Value NjsRohc::compress(const Napi::CallbackInfo& info) {
     struct rohc_buf buf_out = rohc_buf_init_empty(rohc_buffer, static_cast<size_t>(this->njsRohc_->max_len));
 
     // log/dump ip buffer
-    if (this->logger_.has_value()) {
+    if (!this->logger_.IsEmpty()) {
         this->dumpBuffer_(ip_buffer, length);
     }
 
     // compress
     this->njsRohc_->s = rohc_compress4(this->njsRohc_->c, buf_in, &buf_out);
 
-    if (this->logger_.has_value()) {
+    if (!this->logger_.IsEmpty()) {
         std::ostringstream logstatus;
         logstatus << "compress status: = " << this->njsRohc_->s;
 
@@ -303,14 +309,14 @@ Napi::Value NjsRohc::decompress(const Napi::CallbackInfo& info) {
     struct rohc_buf buf_out = rohc_buf_init_empty(ip_buffer, static_cast<size_t>(this->njsRohc_->max_len));
 
     // log/dump rohc buffer
-    if (this->logger_.has_value()) {
+    if (!this->logger_.IsEmpty()) {
         this->dumpBuffer_(rohc_buffer, length);
     }
 
     // decompress
     this->njsRohc_->s = rohc_decompress3(this->njsRohc_->d, buf_in, &buf_out, NULL, NULL);
 
-    if (this->logger_.has_value()) {
+    if (!this->logger_.IsEmpty()) {
         std::ostringstream logstatus;
         logstatus << "decompress status: = " << this->njsRohc_->s;
 

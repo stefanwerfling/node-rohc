@@ -42,8 +42,7 @@ class NjsRohc : public ObjectWrap<NjsRohc> {
         int buf_size_;
         struct rohc_ts time_ = { .sec = 0, .nsec = 0 };
         njsrohc_h* njsRohc_ = nullptr;
-
-        std::optional<Napi::Function> logger_;
+        Napi::FunctionReference logger_;
 };
 
 #endif
