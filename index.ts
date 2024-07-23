@@ -14,8 +14,15 @@ class Rohc {
         return rohcAddon.rohcVersion();
     }
 
+    /**
+     * Rohc addon wrap object
+     * @protected
+     */
     protected _rohc: RohcBindingObject;
 
+    /**
+     * Constructor
+     */
     public constructor() {
         // @ts-ignore
         this._rohc = new rohcAddon.NjsRohc();

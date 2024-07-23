@@ -1,7 +1,13 @@
-# node-rohc
-Binding ROHC library, see more on https://github.com/stefanwerfling/rohc.
+# Node-Rohc
+NodeJs Binding ROHC library, see more on https://github.com/stefanwerfling/rohc. 
+* More information, see on: https://de.wikipedia.org/wiki/ROHC.
+* Inspired by: https://github.com/airbus-cyber/IP2LoRa
 
-This is an alpha version!
+A package for binding to the rohc library with Typescript.
+It will later be combined with https://github.com/stefanwerfling/node-tuntap2.
+It is intended to reduce data traffic, for example via LoRa, a VPN or etc.
+
+This is an alpha version 1.0.1!
 
 ## Rohc install
 ```shell
@@ -17,6 +23,11 @@ git clone https://github.com/stefanwerfling/rohc.git
 
 make all
 sudo make install
+```
+
+```shell
+cd yourProject
+npm intall git+https://github.com/stefanwerfling/node-rohc
 ```
 
 ## Test
@@ -35,23 +46,28 @@ Process finished with exit code 0
 ```js
 const {Rohc} = require('..');
 
+console.log(Rohc.getVersion());
+
 const r = new Rohc();
-console.log(r.getVersion());
+
+r.setLogger(msg => {
+    console.log(msg);
+});
 
 try {
-    const compress = r.rohcCompress(new Uint8Array(ipPacketBufferWithContent));
+    const compress = r.compress(new Uint8Array(ipPacketBufferWithContent));
 
     console.log(compress);
 
-    if (compress.buffer) {
-        console.log(Buffer.from(compress.buffer).toString("hex"));
+    if (compress) {
+        console.log(Buffer.from(compress).toString("hex"));
 
-        const decompress = r.rohcDecompress(compress.buffer);
+        const decompress = r.decompress(compress);
 
         console.log(decompress);
 
-        if (decompress.buffer) {
-            console.log(Buffer.from(decompress.buffer).toString("hex"));
+        if (decompress) {
+            console.log(Buffer.from(decompress).toString("hex"));
         }
     }
 } catch (e) {
