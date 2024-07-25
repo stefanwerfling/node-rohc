@@ -1,13 +1,15 @@
 # Node-Rohc
-NodeJs Binding ROHC library, see more on https://github.com/stefanwerfling/rohc. 
+Node.js Binding ROHC library, see more on https://github.com/stefanwerfling/rohc. 
 * More information, see on: https://de.wikipedia.org/wiki/ROHC.
-* Inspired by: https://github.com/airbus-cyber/IP2LoRa
+* Inspired by: 
+  * https://github.com/airbus-cyber/IP2LoRa 
+  * https://www.cyber.airbus.com/ip2lora-a-diverted-use-of-lora-to-build-your-wireless-ip-link-over-kilometers/
 
 A package for binding to the rohc library with Typescript.
 It will later be combined with https://github.com/stefanwerfling/node-tuntap2.
 It is intended to reduce data traffic, for example via LoRa, a VPN or etc.
 
-This is an alpha version 1.0.1!
+This is an alpha version 1.0.2!
 
 ## Rohc install
 ```shell

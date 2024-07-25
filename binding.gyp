@@ -17,7 +17,8 @@
         "<!@(node -p \"require('node-addon-api').include\")",
       ],
       'libraries': [
-        "/lib/librohc.so"
+        "-L/usr/local/lib",
+        "-lrohc"
       ],
       "defines": [
         "NODE_ADDON_API_DISABLE_DEPRECATED",

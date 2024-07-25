@@ -1,12 +1,13 @@
 {
   "name": "node-rohc",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Binding ROHC library",
   "main": "./dist/index.js",
   "types": "./dist/src/ts/index.d.ts",
   "scripts": {
+    "tsc": "tsc",
     "install": "prebuild-install --runtime napi --tag-prefix '' || node-gyp rebuild",
-    "build": "node-gyp rebuild && npx tsc --build",
+    "build": "node-gyp rebuild && npm run tsc",
     "build:dev": "node-gyp rebuild --debug",
     "test": "sudo nyc --reporter=json-summary  mocha tests/* && npm run coverage:badge",
     "coverage:badge": "coverage-badge-creator"
