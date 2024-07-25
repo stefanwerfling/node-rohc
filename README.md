@@ -20,6 +20,7 @@ sudo apt-get install libpcap-dev
 sudo apt-get install -y libcmocka-dev
 
 git clone https://github.com/stefanwerfling/rohc.git
+cd rohc
 
 ./autogen.sh --prefix=/usr
 
@@ -29,24 +30,26 @@ sudo make install
 
 ```shell
 cd yourProject
+```
+
+```shell
 npm intall git+https://github.com/stefanwerfling/node-rohc
 ```
 
-## Test
-test/test.js Result:
+or 
+
 ```shell
-For help, see: https://nodejs.org/en/docs/inspector
-Debugger attached.
-2.4.0~a0d95093
-Waiting for the debugger to disconnect...
+npm i node-rohc
+```
 
-Process finished with exit code 0
-
+## Check build by hand:
+```shell
+npm run build --loglevel verbose
 ```
 
 ## Used
 ```js
-const {Rohc} = require('..');
+import {Rohc} from 'node-rohc';
 
 console.log(Rohc.getVersion());
 
