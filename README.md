@@ -9,7 +9,7 @@ A package for binding to the rohc library with Typescript.
 It will later be combined with https://github.com/stefanwerfling/node-tuntap2.
 It is intended to reduce data traffic, for example via LoRa, a VPN or etc.
 
-This is an alpha version 1.0.2!
+This is an alpha version 1.0.3!
 
 ## Rohc install
 ```shell
@@ -49,11 +49,18 @@ npm run build --loglevel verbose
 
 ## Used
 ```js
-import {Rohc} from 'node-rohc';
+import {Rohc, RohcProfiles} from 'node-rohc';
 
 console.log(Rohc.getVersion());
 
-const r = new Rohc();
+const r = new Rohc([
+  RohcProfiles.ROHC_PROFILE_UNCOMPRESSED,
+  RohcProfiles.ROHC_PROFILE_IP,
+  RohcProfiles.ROHC_PROFILE_TCP,
+  RohcProfiles.ROHC_PROFILE_UDP,
+  RohcProfiles.ROHC_PROFILE_ESP,
+  RohcProfiles.ROHC_PROFILE_RTP
+]);
 
 r.setLogger(msg => {
     console.log(msg);
@@ -99,6 +106,14 @@ index.js:13After njsrohc_decomp: new size: = 52 org size: = 53
 test.js:96
 Object {buffer: Uint8Array(52)}
 test.js:9945000034000000004006f970c0a80001c0a8000248656c6c6f2c2074686973206973207468652064617461207061796c6f616421
+```
+
+## Dev
+#### Missing rohclib.o
+Set path for the Linker to the libary:
+```shell
+export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+npm run build --loglevel verbose
 ```
 
 ## Doc

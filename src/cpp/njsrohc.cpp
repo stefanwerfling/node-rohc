@@ -15,21 +15,6 @@ static int _rohc_rand(const struct rohc_comp *const c, void *const user_ctx) {
   return rand();
 }
 
-// _print_rohc_traces
-// ---------------------------------------------------------------------------------------------------------------------
-static void _print_rohc_traces (void *const priv_ctxt,
-		    const rohc_trace_level_t level,
-		    const rohc_trace_entity_t entity,
-		    const int profile, const char *const format, ...)
-{
-#ifndef NDEBUG
-  va_list args;
-  va_start (args, format);
-  vfprintf (stderr, format, args);
-  va_end (args);
-#endif
-}
-
 // ---------------------------------------------------------------------------------------------------------------------
 
 /**
@@ -58,30 +43,64 @@ Napi::Object NjsRohc::Init(Napi::Env env, Napi::Object exports) {
 NjsRohc::NjsRohc(const Napi::CallbackInfo& info): Napi::ObjectWrap<NjsRohc>(info) {
     Napi::Env env = info.Env();
 
+    std::vector<int> profiles;
+
+    // Arg 1 Profiles
+    if (info.Length() > 0 && info[0].IsArray()) {
+        Napi::Array inputProfilesArray = info[0].As<Napi::Array>();
+        size_t lengthProfiles = inputProfilesArray.Length();
+
+        for (size_t i = 0; i < lengthProfiles; i++) {
+            Napi::Value valueProfile = inputProfilesArray[i];
+
+            if (valueProfile.IsNumber()) {
+                profiles.push_back(valueProfile.As<Napi::Number>().Int32Value());
+            }
+        }
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
+
+    if (profiles.empty()) {
+        throw Napi::TypeError::New(env, "None Profiles set on argument 1!");
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
+
     this->buf_size_ = DEFAULT_BUFFER_SIZE;
     this->njsRohc_ = (njsrohc_h*)malloc(sizeof(njsrohc_h));
     this->njsRohc_->max_len = this->buf_size_;
 
+    // compress init ---------------------------------------------------------------------------------------------------
+
     this->njsRohc_->c = rohc_comp_new2(ROHC_SMALL_CID, ROHC_SMALL_CID_MAX, _rohc_rand, NULL);
 
-    if(this->njsRohc_->c == NULL) {
+    if (this->njsRohc_->c == NULL) {
         throw Napi::TypeError::New(env, "Failed create the ROHC Compressor!");
     }
 
-    this->njsRohc_->s = rohc_comp_set_traces_cb2(this->njsRohc_->c, _print_rohc_traces, NULL);
-    this->njsRohc_->s = rohc_comp_enable_profiles(
-        this->njsRohc_->c,
-        ROHC_PROFILE_UNCOMPRESSED,
-        ROHC_PROFILE_IP,
-        ROHC_PROFILE_TCP,
-        ROHC_PROFILE_UDP,
-        ROHC_PROFILE_ESP,
-        ROHC_PROFILE_RTP,
-        -1);
-
-    if(!(this->njsRohc_->s)) {
-        throw Napi::TypeError::New(env, "ROHC failed to enable the compressor profiles!");
+    if (!rohc_comp_set_traces_cb2(this->njsRohc_->c, printRohcTraces_, this)) {
+        throw Napi::TypeError::New(env, "Failed to set the callback for traces on compressor!");
     }
+
+    for (int profile : profiles) {
+        if (NjsRohcProfileNames.count(profile) == 0) {
+            std::ostringstream pError;
+            pError << "ROHC Profile not supported! profile: " << profile;
+
+            throw Napi::TypeError::New(env, pError.str());
+        }
+
+        if (!rohc_comp_enable_profile(this->njsRohc_->c, static_cast<rohc_profile_t>(profile))) {
+            std::ostringstream sError;
+            sError << "ROHC failed to enable the compressor profile! profile: ";
+            sError << NjsRohcProfileNames.at(profile);
+
+            throw Napi::TypeError::New(env, sError.str());
+        }
+    }
+
+    // decompress init -------------------------------------------------------------------------------------------------
 
     this->njsRohc_->d = rohc_decomp_new2(ROHC_SMALL_CID, ROHC_SMALL_CID_MAX, ROHC_O_MODE);
 
@@ -89,19 +108,25 @@ NjsRohc::NjsRohc(const Napi::CallbackInfo& info): Napi::ObjectWrap<NjsRohc>(info
         throw Napi::TypeError::New(env, "Failed create the ROHC Decompressor!");
     }
 
-    this->njsRohc_->s = rohc_decomp_set_traces_cb2(this->njsRohc_->d, _print_rohc_traces, NULL);
-    this->njsRohc_->s = rohc_decomp_enable_profiles(
-        this->njsRohc_->d,
-        ROHC_PROFILE_UNCOMPRESSED,
-        ROHC_PROFILE_IP,
-        ROHC_PROFILE_TCP,
-        ROHC_PROFILE_UDP,
-        ROHC_PROFILE_ESP,
-        ROHC_PROFILE_RTP,
-        -1);
+    if (!rohc_decomp_set_traces_cb2(this->njsRohc_->d, printRohcTraces_, this)) {
+        throw Napi::TypeError::New(env, "Failed to set the callback for traces on decompressor!");
+    }
 
-    if(!(this->njsRohc_->s)) {
-        throw Napi::TypeError::New(env, "ROHC failed to enable the decompressor profiles!");
+    for (int profile : profiles) {
+        if (NjsRohcProfileNames.count(profile) == 0) {
+            std::ostringstream pError;
+            pError << "ROHC Profile not supported! profile: " << profile;
+
+            throw Napi::TypeError::New(env, pError.str());
+        }
+
+        if (!rohc_decomp_enable_profile(this->njsRohc_->d, static_cast<rohc_profile_t>(profile))) {
+            std::ostringstream sError;
+            sError << "ROHC failed to enable the decompressor profile! profile: ";
+            sError << NjsRohcProfileNames.at(profile);
+
+            throw Napi::TypeError::New(env, sError.str());
+        }
     }
 };
 
@@ -147,10 +172,15 @@ void NjsRohc::setBufferSize(const Napi::CallbackInfo& info) {
 
     if (info.Length() < 1 || !info[0].IsNumber()) {
         Napi::TypeError::New(env, "Expected a number as the first argument").ThrowAsJavaScriptException();
-        return;
     }
 
-    this->buf_size_ = info[0].As<Napi::Number>().Int32Value();
+    int size = info[0].As<Napi::Number>().Int32Value();
+
+    if (size < DEFAULT_BUFFER_SIZE) {
+        Napi::TypeError::New(env, "The new size is smaller as DEFAULT_BUFFER_SIZE!").ThrowAsJavaScriptException();
+    }
+
+    this->buf_size_ = size;
     this->njsRohc_->max_len = this->buf_size_;
 }
 
@@ -182,7 +212,6 @@ void NjsRohc::setLogger(const Napi::CallbackInfo& info) {
 
     if (!info[0].IsFunction()) {
         Napi::TypeError::New(env, "Expected a function as the first argument").ThrowAsJavaScriptException();
-        return;
     }
 
     this->logger_ = Napi::Persistent(info[0].As<Napi::Function>());
@@ -214,6 +243,37 @@ void NjsRohc::dumpBuffer_(uint8_t* buffer, size_t length) {
    }
 
    this->log_(bufdump.str());
+}
+
+void NjsRohc::printRohcTraces_(
+    void *const priv_ctxt,
+    const rohc_trace_level_t level,
+    const rohc_trace_entity_t entity,
+    const int profile,
+    const char *const format,
+    ...
+) {
+    try {
+        const size_t bufferSize = 1024;
+        char buffer[bufferSize];
+
+        va_list args;
+        va_start(args, format);
+        vsnprintf(buffer, bufferSize, format, args);
+        va_end(args);
+
+        std::string message(buffer);
+
+        NjsRohc* instance = static_cast<NjsRohc*>(priv_ctxt);
+        instance->log_(message);
+    } catch (...) {
+       #ifndef NDEBUG
+         va_list args;
+         va_start (args, format);
+         vfprintf (stderr, format, args);
+         va_end (args);
+       #endif
+    }
 }
 
 /**

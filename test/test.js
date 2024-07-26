@@ -1,4 +1,4 @@
-const {Rohc} = require('..');
+const {Rohc, RohcProfiles} = require('..');
 
 
 const createIPPacketWithContent = () => {
@@ -82,7 +82,15 @@ function hexStringToUint8Array(hexString) {
 
 console.log(Rohc.getVersion());
 
-const r = new Rohc();
+const r = new Rohc([
+    RohcProfiles.ROHC_PROFILE_UNCOMPRESSED,
+    RohcProfiles.ROHC_PROFILE_IP,
+    RohcProfiles.ROHC_PROFILE_TCP,
+    RohcProfiles.ROHC_PROFILE_UDP,
+    RohcProfiles.ROHC_PROFILE_ESP,
+    RohcProfiles.ROHC_PROFILE_RTP
+]);
+
 r.setLogger(msg => {
    console.log(msg);
 });
@@ -132,3 +140,5 @@ try {
 } catch (e) {
     console.error(e);
 }
+
+console.log('End');

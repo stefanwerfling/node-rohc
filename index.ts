@@ -1,4 +1,4 @@
-import rohcAddon, {RohcBindingLogging, RohcBindingObject} from './src/ts/RohcAddon';
+import rohcAddon, {RohcBindingLogging, RohcBindingObject, RohcProfiles, RohcStatus} from './src/ts/RohcAddon';
 
 /**
  * A Binding library for the RObust Header Compression (ROHC) protocol.
@@ -22,10 +22,11 @@ class Rohc {
 
     /**
      * Constructor
+     * @param {RohcProfiles[]} profiles
      */
-    public constructor() {
+    public constructor(profiles: RohcProfiles[]) {
         // @ts-ignore
-        this._rohc = new rohcAddon.NjsRohc();
+        this._rohc = new rohcAddon.NjsRohc(profiles);
     }
 
     /**
@@ -53,6 +54,10 @@ class Rohc {
     public setLogger(func: RohcBindingLogging): void {
         this._rohc.setLogger(func);
     }
+
 }
 
-export {Rohc};
+/**
+ * Exports
+ */
+export {Rohc, RohcProfiles, RohcStatus};

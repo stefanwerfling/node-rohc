@@ -6,6 +6,7 @@
 #include <rohc/rohc_decomp.h>
 #include <napi.h>
 #include <optional>
+#include <map>
 
 using namespace Napi;
 
@@ -17,6 +18,19 @@ typedef struct njsrohc_s {
   struct rohc_decomp *d; /* decompressor */
   int max_len;
 } njsrohc_h;
+
+const std::map<int, std::string> NjsRohcProfileNames = {
+    {ROHC_PROFILE_UNCOMPRESSED, "ROHC_PROFILE_UNCOMPRESSED"},
+    {ROHC_PROFILE_RTP, "ROHC_PROFILE_RTP"},
+    {ROHC_PROFILE_UDP, "ROHC_PROFILE_UDP"},
+    {ROHC_PROFILE_ESP, "ROHC_PROFILE_ESP"},
+    {ROHC_PROFILE_IP, "ROHC_PROFILE_IP"},
+    {ROHC_PROFILE_RTP_LLA, "ROHC_PROFILE_RTP_LLA"},
+    {ROHC_PROFILE_TCP, "ROHC_PROFILE_TCP"},
+    {ROHC_PROFILE_UDPLITE_RTP, "ROHC_PROFILE_UDPLITE_RTP"},
+    {ROHC_PROFILE_UDPLITE, "ROHC_PROFILE_UDPLITE"},
+    {ROHC_PROFILE_MAX, "ROHC_PROFILE_MAX"}
+};
 
 /**
  * NjsRohc Object
@@ -38,6 +52,8 @@ class NjsRohc : public ObjectWrap<NjsRohc> {
         void dumpBuffer_(uint8_t* buffer, size_t length);
         Napi::Value compress(const Napi::CallbackInfo& info);
         Napi::Value decompress(const Napi::CallbackInfo& info);
+
+        static void printRohcTraces_(void *const priv_ctxt, const rohc_trace_level_t level, const rohc_trace_entity_t entity, const int profile, const char *const format, ...);
 
         int buf_size_;
         struct rohc_ts time_ = { .sec = 0, .nsec = 0 };
