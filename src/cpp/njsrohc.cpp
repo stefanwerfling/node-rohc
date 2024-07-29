@@ -24,9 +24,16 @@ Napi::Object NjsRohc::Init(Napi::Env env, Napi::Object exports) {
     Napi::Function func = DefineClass(env, "NjsRohc", {
         InstanceMethod("setBufferSize", &NjsRohc::setBufferSize),
         InstanceMethod("getBufferSize", &NjsRohc::getBufferSize),
+        InstanceMethod("getLastStatus", &NjsRohc::getLastStatus),
         InstanceMethod("setLogger", &NjsRohc::setLogger),
+
         InstanceMethod("compress", &NjsRohc::compress),
+        InstanceMethod("compressLastPacketInfo", &NjsRohc::compressLastPacketInfo),
+        InstanceMethod("compressGeneralInfo", &NjsRohc::compressGeneralInfo),
+
         InstanceMethod("decompress", &NjsRohc::decompress),
+        InstanceMethod("decompressLastPacketInfo", &NjsRohc::decompressLastPacketInfo),
+        InstanceMethod("decompressGeneralInfo", &NjsRohc::decompressGeneralInfo),
     });
 
     Napi::FunctionReference* constructor = new Napi::FunctionReference();
@@ -193,6 +200,14 @@ Napi::Value NjsRohc::getBufferSize(const Napi::CallbackInfo& info) {
 }
 
 /**
+ * Get the last status by compress/decompress
+ */
+Napi::Value NjsRohc::getLastStatus(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+    return Napi::Number::New(env, this->njsRohc_->s);
+}
+
+/**
  * Set the logger callback for more log information
  */
 void NjsRohc::setLogger(const Napi::CallbackInfo& info) {
@@ -245,6 +260,9 @@ void NjsRohc::dumpBuffer_(uint8_t* buffer, size_t length) {
    this->log_(bufdump.str());
 }
 
+/**
+ * Print/Log Traces for compress/decompress
+ */
 void NjsRohc::printRohcTraces_(
     void *const priv_ctxt,
     const rohc_trace_level_t level,
@@ -275,6 +293,8 @@ void NjsRohc::printRohcTraces_(
        #endif
     }
 }
+
+// compress ------------------------------------------------------------------------------------------------------------
 
 /**
  * Compress IP Packet
@@ -338,6 +358,69 @@ Napi::Value NjsRohc::compress(const Napi::CallbackInfo& info) {
 }
 
 /**
+ * Some information about the last compressed packet.
+ */
+Napi::Value NjsRohc::compressLastPacketInfo(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+
+    rohc_comp_last_packet_info2_t comp_last_packet_info;
+
+    comp_last_packet_info.version_major = 0;
+    comp_last_packet_info.version_minor = 0;
+
+    if (!rohc_comp_get_last_packet_info2(this->njsRohc_->c, &comp_last_packet_info)) {
+        Napi::TypeError::New(env, "Failed to get compression info").ThrowAsJavaScriptException();
+    }
+
+    const Object infos = Object::New(env);
+
+    infos.Set("version_major", Napi::Number::New(env, comp_last_packet_info.version_major));
+    infos.Set("version_minor", Napi::Number::New(env, comp_last_packet_info.version_minor));
+    infos.Set("context_id", Napi::Number::New(env, comp_last_packet_info.context_id));
+    infos.Set("is_context_init", Napi::Boolean::New(env, comp_last_packet_info.is_context_init));
+    infos.Set("context_mode", Napi::Number::New(env, static_cast<int>(comp_last_packet_info.context_mode)));
+    infos.Set("context_state", Napi::Number::New(env, static_cast<int>(comp_last_packet_info.context_state)));
+    infos.Set("context_used", Napi::Boolean::New(env, comp_last_packet_info.context_used));
+    infos.Set("profile_id", Napi::Number::New(env, comp_last_packet_info.profile_id));
+    infos.Set("packet_type", Napi::Number::New(env, static_cast<int>(comp_last_packet_info.packet_type)));
+    infos.Set("total_last_uncomp_size", Napi::Number::New(env, static_cast<double>(comp_last_packet_info.total_last_uncomp_size)));
+    infos.Set("header_last_uncomp_size", Napi::Number::New(env, static_cast<double>(comp_last_packet_info.header_last_uncomp_size)));
+    infos.Set("total_last_comp_size", Napi::Number::New(env, static_cast<double>(comp_last_packet_info.total_last_comp_size)));
+    infos.Set("header_last_comp_size", Napi::Number::New(env, static_cast<double>(comp_last_packet_info.header_last_comp_size)));
+
+    return infos;
+}
+
+/**
+ * Some general information about the compressor.
+ */
+Napi::Value NjsRohc::compressGeneralInfo(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+
+    rohc_comp_general_info_t comp_general_info;
+
+    comp_general_info.version_major = 0;
+    comp_general_info.version_minor = 0;
+
+    if (!rohc_comp_get_general_info(this->njsRohc_->c, &comp_general_info)) {
+        Napi::TypeError::New(env, "Failed to get compression info").ThrowAsJavaScriptException();
+    }
+
+    const Object infos = Object::New(env);
+
+    infos.Set("version_major", Napi::Number::New(env, comp_general_info.version_major));
+    infos.Set("version_minor", Napi::Number::New(env, comp_general_info.version_minor));
+    infos.Set("contexts_nr", Napi::Number::New(env, static_cast<double>(comp_general_info.contexts_nr)));
+    infos.Set("packets_nr", Napi::Number::New(env, static_cast<double>(comp_general_info.packets_nr)));
+    infos.Set("uncomp_bytes_nr", Napi::Number::New(env, static_cast<double>(comp_general_info.uncomp_bytes_nr)));
+    infos.Set("comp_bytes_nr", Napi::Number::New(env, static_cast<double>(comp_general_info.comp_bytes_nr)));
+
+    return infos;
+}
+
+// decompress ----------------------------------------------------------------------------------------------------------
+
+/**
  * Decompress ROHC Packet
  */
 Napi::Value NjsRohc::decompress(const Napi::CallbackInfo& info) {
@@ -396,4 +479,71 @@ Napi::Value NjsRohc::decompress(const Napi::CallbackInfo& info) {
     }
 
     return resultBuffer;
+}
+
+/**
+ * Some information about the last decompressed packet
+ */
+Napi::Value NjsRohc::decompressLastPacketInfo(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+
+    rohc_decomp_last_packet_info_t decomp_last_packet_info;
+
+    decomp_last_packet_info.version_major = 0;
+    decomp_last_packet_info.version_minor = 0;
+
+    if (!rohc_decomp_get_last_packet_info(this->njsRohc_->d, &decomp_last_packet_info)) {
+        Napi::TypeError::New(env, "Failed to get decompression info").ThrowAsJavaScriptException();
+    }
+
+    const Object infos = Object::New(env);
+
+    infos.Set("version_major", Napi::Number::New(env, decomp_last_packet_info.version_major));
+    infos.Set("version_minor", Napi::Number::New(env, decomp_last_packet_info.version_minor));
+    infos.Set("context_mode", Napi::Number::New(env, static_cast<int>(decomp_last_packet_info.context_mode)));
+    infos.Set("context_state", Napi::Number::New(env, static_cast<int>(decomp_last_packet_info.context_state)));
+    infos.Set("profile_id", Napi::Number::New(env, decomp_last_packet_info.profile_id));
+    infos.Set("nr_lost_packets", Napi::Number::New(env, static_cast<double>(decomp_last_packet_info.nr_lost_packets)));
+    infos.Set("nr_misordered_packets", Napi::Number::New(env, static_cast<double>(decomp_last_packet_info.nr_misordered_packets)));
+    infos.Set("is_duplicated", Napi::Boolean::New(env, decomp_last_packet_info.is_duplicated));
+    infos.Set("corrected_crc_failures", Napi::Number::New(env, static_cast<double>(decomp_last_packet_info.corrected_crc_failures)));
+    infos.Set("corrected_sn_wraparounds", Napi::Number::New(env, static_cast<double>(decomp_last_packet_info.corrected_sn_wraparounds)));
+    infos.Set("corrected_wrong_sn_updates", Napi::Number::New(env, static_cast<double>(decomp_last_packet_info.corrected_wrong_sn_updates)));
+    infos.Set("packet_type", Napi::Number::New(env, static_cast<int>(decomp_last_packet_info.packet_type)));
+    infos.Set("total_last_comp_size", Napi::Number::New(env, static_cast<double>(decomp_last_packet_info.total_last_comp_size)));
+    infos.Set("header_last_comp_size", Napi::Number::New(env, static_cast<double>(decomp_last_packet_info.header_last_comp_size)));
+    infos.Set("total_last_uncomp_size", Napi::Number::New(env, static_cast<double>(decomp_last_packet_info.total_last_uncomp_size)));
+    infos.Set("header_last_uncomp_size", Napi::Number::New(env, static_cast<double>(decomp_last_packet_info.header_last_uncomp_size)));
+
+    return infos;
+}
+
+/**
+ * Some general information about the decompressor.
+ */
+Napi::Value NjsRohc::decompressGeneralInfo(const Napi::CallbackInfo& info) {
+    Napi::Env env = info.Env();
+
+    rohc_decomp_general_info_t decomp_general_info;
+
+    decomp_general_info.version_major = 0;
+    decomp_general_info.version_minor = 0;
+
+    if (!rohc_decomp_get_general_info(this->njsRohc_->d, &decomp_general_info)) {
+        Napi::TypeError::New(env, "Failed to get decompression info").ThrowAsJavaScriptException();
+    }
+
+    const Object infos = Object::New(env);
+
+    infos.Set("version_major", Napi::Number::New(env, decomp_general_info.version_major));
+    infos.Set("version_minor", Napi::Number::New(env, decomp_general_info.version_minor));
+    infos.Set("contexts_nr", Napi::Number::New(env, static_cast<double>(decomp_general_info.contexts_nr)));
+    infos.Set("packets_nr", Napi::Number::New(env, static_cast<double>(decomp_general_info.packets_nr)));
+    infos.Set("comp_bytes_nr", Napi::Number::New(env, static_cast<double>(decomp_general_info.comp_bytes_nr)));
+    infos.Set("uncomp_bytes_nr", Napi::Number::New(env, static_cast<double>(decomp_general_info.uncomp_bytes_nr)));
+    infos.Set("corrected_crc_failures", Napi::Number::New(env, static_cast<double>(decomp_general_info.corrected_crc_failures)));
+    infos.Set("corrected_sn_wraparounds", Napi::Number::New(env, static_cast<double>(decomp_general_info.corrected_sn_wraparounds)));
+    infos.Set("corrected_wrong_sn_updates", Napi::Number::New(env, static_cast<double>(decomp_general_info.corrected_wrong_sn_updates)));
+
+    return infos;
 }

@@ -47,11 +47,18 @@ class NjsRohc : public ObjectWrap<NjsRohc> {
     private:
         void setBufferSize(const Napi::CallbackInfo& info);
         Napi::Value getBufferSize(const Napi::CallbackInfo& info);
+        Napi::Value getLastStatus(const Napi::CallbackInfo& info);
         void setLogger(const Napi::CallbackInfo& info);
         void log_(const std::string& message);
         void dumpBuffer_(uint8_t* buffer, size_t length);
+
         Napi::Value compress(const Napi::CallbackInfo& info);
+        Napi::Value compressLastPacketInfo(const Napi::CallbackInfo& info);
+        Napi::Value compressGeneralInfo(const Napi::CallbackInfo& info);
+
         Napi::Value decompress(const Napi::CallbackInfo& info);
+        Napi::Value decompressLastPacketInfo(const Napi::CallbackInfo& info);
+        Napi::Value decompressGeneralInfo(const Napi::CallbackInfo& info);
 
         static void printRohcTraces_(void *const priv_ctxt, const rohc_trace_level_t level, const rohc_trace_entity_t entity, const int profile, const char *const format, ...);
 

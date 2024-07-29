@@ -1,7 +1,18 @@
-import rohcAddon, {RohcBindingLogging, RohcBindingObject, RohcProfiles, RohcStatus} from './src/ts/RohcAddon';
+import rohcAddon, {
+    RohcBindingCompGeneralInfo,
+    RohcBindingCompLastPacketInfo2,
+    RohcBindingLogging,
+    RohcBindingObject,
+    RohcProfiles,
+    RohcStatus,
+    RohcMode,
+    RohcBindingDecmopLastPacketInfo,
+    RohcPacket,
+    RohcDecompState, RohcBindingDecmopGeneralInfo
+} from './src/ts/RohcAddon';
 
 /**
- * A Binding library for the RObust Header Compression (ROHC) protocol.
+ * A Binding library for the Robust Header Compression (ROHC) protocol.
  * @see https://github.com/stefanwerfling/rohc
  */
 class Rohc {
@@ -55,9 +66,56 @@ class Rohc {
         this._rohc.setLogger(func);
     }
 
+    /**
+     * Set the buffer size for compress/decompress
+     * @param {number} size
+     */
+    public setBufferSize(size: number): void {
+        this._rohc.setBufferSize(size);
+    }
+
+    /**
+     * Get the last status by compress/decompress
+     * @returns {RohcStatus}
+     */
+    public getLastStatus(): RohcStatus {
+        return this._rohc.getLastStatus();
+    }
+
+    /**
+     * Some information about the last compressed packet.
+     * @returns {RohcBindingCompLastPacketInfo2}
+     */
+    public compressLastPacketInfo(): RohcBindingCompLastPacketInfo2 {
+        return this._rohc.compressLastPacketInfo();
+    }
+
+    /**
+     * Some general information about the compressor.
+     * @returns {RohcBindingCompGeneralInfo}
+     */
+    public compressGeneralInfo(): RohcBindingCompGeneralInfo {
+        return this._rohc.compressGeneralInfo();
+    }
+
+    /**
+     * Some information about the last decompressed packet
+     * @returns {RohcBindingDecmopLastPacketInfo}
+     */
+    public decompressLastPacketInfo(): RohcBindingDecmopLastPacketInfo {
+        return this._rohc.decompressLastPacketInfo();
+    }
+
+    /**
+     * Some general information about the decompressor.
+     * @returns {RohcBindingDecmopGeneralInfo}
+     */
+    public decompressGeneralInfo(): RohcBindingDecmopGeneralInfo {
+        return this._rohc.decompressGeneralInfo();
+    }
 }
 
 /**
  * Exports
  */
-export {Rohc, RohcProfiles, RohcStatus};
+export {Rohc, RohcProfiles, RohcStatus, RohcMode, RohcDecompState, RohcPacket};

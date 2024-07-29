@@ -9,7 +9,7 @@ A package for binding to the rohc library with Typescript.
 It will later be combined with https://github.com/stefanwerfling/node-tuntap2.
 It is intended to reduce data traffic, for example via LoRa, a VPN or etc.
 
-This is an alpha version 1.0.3!
+This is an alpha version 1.0.4!
 
 ## Rohc install
 ```shell
@@ -49,7 +49,7 @@ npm run build --loglevel verbose
 
 ## Used
 ```js
-import {Rohc, RohcProfiles} from 'node-rohc';
+import {Rohc, RohcProfiles, RohcStatus} from 'node-rohc';
 
 console.log(Rohc.getVersion());
 
@@ -82,6 +82,15 @@ try {
             console.log(Buffer.from(decompress).toString("hex"));
         }
     }
+
+    if (r.getLastStatus() === RohcStatus.ROHC_OK) {
+      console.log('All OK');
+    }
+    
+    console.log(r.compressLastPacketInfo());
+    console.log(r.compressGeneralInfo());
+    console.log(r.decompressLastPacketInfo());
+    console.log(r.decompressGeneralInfo());
 } catch (e) {
     console.error(e);
 }
@@ -89,23 +98,109 @@ try {
 
 Output:
 ```text
+Debugger attached.
+Uint8Array(52) [
+   69,   0,   0,  52,   0,   0,   0,   0,  64,  6, 249,
+  112, 192, 168,   0,   1, 192, 168,   0,   2, 72, 101,
+  108, 108, 111,  44,  32, 116, 104, 105, 115, 32, 105,
+  115,  32, 116, 104, 101,  32, 100,  97, 116, 97,  32,
+  112,  97, 121, 108, 111,  97, 100,  33
+]
 2.4.0~a0d95093
-index.ts:10Before njsrohc_comp
-index.ts:10Buffer Dump: 45 00 00 34 00 00 00 00 40 06 f9 70 c0 a8 00 01 c0 a8 00 02 48 65 6c 6c 6f 2c 20 74 68 69 73 20 69 73 20 74 68 65 20 64 61 74 61 20 70 61 79 6c 6f 61 64 21 
-index.ts:10compress status: = 0
-index.ts:10Buffer Dump: fd 04 45 40 06 c0 a8 00 01 c0 a8 00 02 00 40 00 00 20 00 fb 67 48 65 6c 6c 6f 2c 20 74 68 69 73 20 69 73 20 74 68 65 20 64 61 74 61 20 70 61 79 6c 6f 61 64 21 
-index.ts:10After njsrohc_comp: new size: = 53 org size: = 52
-test.js:89
-Object {buffer: Uint8Array(53)}
-test.js:92fd04454006c0a80001c0a80002004000002000fb6748656c6c6f2c2074686973206973207468652064617461207061796c6f616421
-index.js:13Before njsrohc_decomp
-index.js:13Buffer Dump: fd 04 45 40 06 c0 a8 00 01 c0 a8 00 02 00 40 00 00 20 00 fb 67 48 65 6c 6c 6f 2c 20 74 68 69 73 20 69 73 20 74 68 65 20 64 61 74 61 20 70 61 79 6c 6f 61 64 21 
-index.js:13decompress status: = 0
-index.js:13Buffer Dump: 45 00 00 34 00 00 00 00 40 06 f9 70 c0 a8 00 01 c0 a8 00 02 48 65 6c 6c 6f 2c 20 74 68 69 73 20 69 73 20 74 68 65 20 64 61 74 61 20 70 61 79 6c 6f 61 64 21 
-index.js:13After njsrohc_decomp: new size: = 52 org size: = 53
-test.js:96
-Object {buffer: Uint8Array(52)}
-test.js:9945000034000000004006f970c0a80001c0a8000248656c6c6f2c2074686973206973207468652064617461207061796c6f616421
+Buffer Dump: 45 00 00 34 00 00 00 00 40 06 f9 70 c0 a8 00 01 c0 a8 00 02 48 65 6c 6c 6f 2c 20 74 68 69 73 20 69 73 20 74 68 65 20 64 61 74 61 20 70 61 79 6c 6f 61 64 21 
+[rohc_comp.c:640 rohc_comp_get_profile()] ROHCv1 Uncompressed profile is possible
+
+[rohc_comp.c:1022 rohc_comp_are_ip_hdrs_supported()] found IPv4
+
+[rohc_comp.c:1078 rohc_comp_are_ip_hdrs_supported()]    source address = c0a80001 (192.168.0.1)
+...
+
+[rohc_comp.c:1595 rohc_compress4()] copy full 32-byte payload
+
+[rohc_comp.c:1603 rohc_compress4()] ROHC size = 53 bytes (header = 21, payload = 32), output buffer size = 2048
+
+compress status: = 0
+Uint8Array(53) [
+  253,   4,  69,  64,   6, 192, 168,   0,   1, 192, 168,
+    0,   2,   0,  64,   0,   0,  32,   0, 251, 103,  72,
+  101, 108, 108, 111,  44,  32, 116, 104, 105, 115,  32,
+  105, 115,  32, 116, 104, 101,  32, 100,  97, 116,  97,
+   32, 112,  97, 121, 108, 111,  97, 100,  33
+]
+fd04454006c0a80001c0a80002004000002000fb6748656c6c6f2c2074686973206973207468652064617461207061796c6f616421
+Buffer Dump: fd 04 45 40 06 c0 a8 00 01 c0 a8 00 02 00 40 00 00 20 00 fb 67 48 65 6c 6c 6f 2c 20 74 68 69 73 20 69 73 20 74 68 65 20 64 61 74 61 20 70 61 79 6c 6f 61 64 21 
+[rohc_decomp.c:793 rohc_decompress3()] decompress the 53-byte packet #1
+
+[rohc_decomp.c:3924 rohc_decomp_parse_padding()] skip 0 byte(s) of padding
+
+[rohc_decomp.c:3852 rohc_decomp_decode_cid()] no add-CID found, CID defaults to 0
+
+....
+
+decompress status: = 0
+Uint8Array(52) [
+   69,   0,   0,  52,   0,   0,   0,   0,  64,  6, 249,
+  112, 192, 168,   0,   1, 192, 168,   0,   2, 72, 101,
+  108, 108, 111,  44,  32, 116, 104, 105, 115, 32, 105,
+  115,  32, 116, 104, 101,  32, 100,  97, 116, 97,  32,
+  112,  97, 121, 108, 111,  97, 100,  33
+]
+45000034000000004006f970c0a80001c0a8000248656c6c6f2c2074686973206973207468652064617461207061796c6f616421
+All OK
+{
+  version_major: 0,
+  version_minor: 0,
+  context_id: 0,
+  is_context_init: true,
+  context_mode: 1,
+  context_state: 1,
+  context_used: true,
+  profile_id: 4,
+  packet_type: 0,
+  total_last_uncomp_size: 52,
+  header_last_uncomp_size: 20,
+  total_last_comp_size: 53,
+  header_last_comp_size: 21
+}
+{
+  version_major: 0,
+  version_minor: 0,
+  contexts_nr: 1,
+  packets_nr: 1,
+  uncomp_bytes_nr: 52,
+  comp_bytes_nr: 53
+}
+{
+  version_major: 0,
+  version_minor: 0,
+  context_mode: 2,
+  context_state: 3,
+  profile_id: 4,
+  nr_lost_packets: 0,
+  nr_misordered_packets: 0,
+  is_duplicated: false,
+  corrected_crc_failures: 11745388377929038000,
+  corrected_sn_wraparounds: 14987979559889062000,
+  corrected_wrong_sn_updates: 12105675798372346000,
+  packet_type: 449595,
+  total_last_comp_size: 18407961667527770000,
+  header_last_comp_size: 1940628627783807,
+  total_last_uncomp_size: 18407961667125117000,
+  header_last_uncomp_size: 217316637802623
+}
+{
+  version_major: 0,
+  version_minor: 0,
+  contexts_nr: 1,
+  packets_nr: 1,
+  comp_bytes_nr: 53,
+  uncomp_bytes_nr: 52,
+  corrected_crc_failures: 0,
+  corrected_sn_wraparounds: 8518447232180027000,
+  corrected_wrong_sn_updates: 4295000063
+}
+
+
 ```
 
 ## Dev
@@ -117,7 +212,8 @@ npm run build --loglevel verbose
 ```
 
 ## Doc
-* https://rohc-lib.org/support/documentation/API/rohc-doc-2.1.0/group__rohc.html
+* https://rohc-lib.org/support/documentation/API/rohc-doc-2.3.1/group__rohc.html
 
 ## Helpful pages
 * https://hpd.gasmi.net/
+* https://www.sharetechnote.com/html/Handbook_LTE_ROHC.html

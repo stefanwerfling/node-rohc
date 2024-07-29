@@ -1,5 +1,4 @@
-const {Rohc, RohcProfiles} = require('..');
-
+const {Rohc, RohcProfiles, RohcStatus} = require('..');
 
 const createIPPacketWithContent = () => {
     // IP header fields
@@ -111,6 +110,15 @@ try {
             console.log(Buffer.from(decompress).toString("hex"));
         }
     }
+
+    if (r.getLastStatus() === RohcStatus.ROHC_OK) {
+        console.log('All OK');
+    }
+
+    console.log(r.compressLastPacketInfo());
+    console.log(r.compressGeneralInfo());
+    console.log(r.decompressLastPacketInfo());
+    console.log(r.decompressGeneralInfo());
 } catch (e) {
     console.error(e);
 }
