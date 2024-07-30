@@ -1,6 +1,6 @@
 {
   "name": "node-rohc",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "description": "Binding ROHC library",
   "main": "./dist/index.js",
   "types": "./dist/src/ts/index.d.ts",

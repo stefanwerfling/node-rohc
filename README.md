@@ -9,7 +9,7 @@ A package for binding to the rohc library with Typescript.
 It will later be combined with https://github.com/stefanwerfling/node-tuntap2.
 It is intended to reduce data traffic, for example via LoRa, a VPN or etc.
 
-This is an alpha version 1.0.4!
+This is an alpha version 1.0.5!
 
 ## Rohc install
 ```shell
